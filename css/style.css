@@ -267,6 +267,12 @@ body {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   cursor: default;
+  /* fundo escuro garantido desde o primeiro instante — em alguns aparelhos
+     (tablet, celular) a tela de carregamento aparecia sobre o fundo claro
+     da página por um instante, deixando o texto ilegível; assim o texto
+     de carregamento sempre tem o mesmo fundo escuro por trás, em qualquer
+     aparelho */
+  background: #120d08;
 }
 
 #scene-container canvas {
@@ -342,8 +348,8 @@ body {
   transform: translate(-50%, -50%);
   font-family: 'Caveat', cursive;
   font-size: 1.4rem;
-  color: var(--ink);
-  text-shadow: 0 1px 2px rgba(255, 245, 220, 0.6);
+  color: #f3e3bd;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   z-index: 2;
   pointer-events: none;
   text-align: center;
