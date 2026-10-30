@@ -21,12 +21,9 @@
   <main class="desk-scene">
     <div id="scene-container"></div>
     <div id="scene-loading" class="scene-loading">acendendo a vela...</div>
-    <div id="stack-hint" class="stack-hint" aria-hidden="true">
-      <span class="stack-hint-text">clique aqui</span>
-      <svg class="stack-hint-arrow" viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
-        <path d="M30 2 C32 40 28 70 25 92" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-        <path d="M10 82 L24 98 L39 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <div id="stack-hint" class="stack-hint hidden" aria-hidden="true">
+      <span class="stack-hint-ring"></span>
+      <span class="stack-hint-core"></span>
     </div>
   </main>
 
@@ -39,6 +36,6 @@
   </div>
 
   <script src="js/letters.js"></script>
-  <script type="module" src="js/scene3d.js?v=8"></script>
+  <script type="module" src="js/scene3d.js?v=9"></script>
 </body>
 </html>

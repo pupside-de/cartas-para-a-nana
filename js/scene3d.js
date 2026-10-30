@@ -24,6 +24,9 @@ let container;
 const envelopes = []; // records
 let pendingRec = null;
 let hovered = null;
+let stackHintEl = null;
+let frameCount = 0;
+const tmpVec = new THREE.Vector3();
 
 function init() {
   container = document.getElementById("scene-container");
@@ -36,9 +39,14 @@ function init() {
   camera.position.set(0, 3.4, 6.2);
   camera.lookAt(0, 0.3, 0);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  // tablets/celulares costumam ter devicePixelRatio alto (2-3x), o que fica
+  // muito pesado pra renderizar sombras em tempo real — limitamos mais ali
+  const isTouchDevice = matchMedia("(pointer: coarse)").matches || /Mobi|Android|iPad|iPhone/i.test(navigator.userAgent);
+  const maxPixelRatio = isTouchDevice ? 1.5 : 2;
+
+  renderer = new THREE.WebGLRenderer({ antialias: !isTouchDevice, powerPreference: "high-performance" });
   renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -74,15 +82,27 @@ function init() {
 
   document.getElementById("scene-loading").style.display = "none";
 
-  const hint = document.getElementById("stack-hint");
-  if (hint && getOpenedIds().length > 0) hint.classList.add("hidden");
+  stackHintEl = document.getElementById("stack-hint");
 
   animate();
 }
 
-function hideStackHint() {
-  const hint = document.getElementById("stack-hint");
-  if (hint) hint.classList.add("hidden");
+// mantém o brilho exatamente em cima do envelope que deve ser clicado,
+// seguindo a posição 3D projetada na tela a cada frame
+function updateStackHint() {
+  if (!stackHintEl) return;
+  const target = envelopes.find((r) => r.interactive && r.pile === "unread" && !r.opening);
+  if (!target) {
+    stackHintEl.classList.add("hidden");
+    return;
+  }
+  target.group.getWorldPosition(tmpVec);
+  tmpVec.y += 0.12;
+  const screen = worldToScreen(tmpVec);
+  const containerRect = container.getBoundingClientRect();
+  stackHintEl.style.left = `${screen.x - containerRect.left}px`;
+  stackHintEl.style.top = `${screen.y - containerRect.top}px`;
+  stackHintEl.classList.remove("hidden");
 }
 
 function buildLights() {
@@ -92,7 +112,7 @@ function buildLights() {
   candleLight = new THREE.PointLight(0xffb067, 5.5, 13, 1.8);
   candleLight.position.set(-2.3, 1.15, 0.5);
   candleLight.castShadow = true;
-  candleLight.shadow.mapSize.set(1024, 1024);
+  candleLight.shadow.mapSize.set(512, 512);
   candleLight.shadow.bias = -0.003;
   scene.add(candleLight);
 
@@ -1147,7 +1167,6 @@ function worldToScreen(vec3) {
 }
 
 function openLetter(rec) {
-  hideStackHint();
   pendingRec = rec;
   rec.opening = true;
   rec.flapTarget = 1;
@@ -1166,6 +1185,7 @@ function openLetter(rec) {
     ${rec.letter.date ? `<span class="letter-date">${rec.letter.date}</span>` : ""}
     ${escapeHtml(rec.letter.body)}
   `;
+  sheet.scrollTop = 0;
 
   sheet.style.setProperty("--origin-x", `${screen.x}px`);
   sheet.style.setProperty("--origin-y", `${screen.y}px`);
@@ -1228,10 +1248,10 @@ function animate() {
   // envelopes: ease toward target pile position + flap/paper animation
   envelopes.forEach((rec) => {
     const hoverLift = rec === hovered && rec.interactive && !rec.opening ? 0.1 : 0;
-    const target = rec.pos.clone();
-    target.y += hoverLift;
+    tmpVec.copy(rec.pos);
+    tmpVec.y += hoverLift;
 
-    rec.group.position.lerp(target, 1 - Math.pow(0.001, dt));
+    rec.group.position.lerp(tmpVec, 1 - Math.pow(0.001, dt));
     rec.group.rotation.y += (rec.rotY - rec.group.rotation.y) * (1 - Math.pow(0.001, dt));
 
     const flapGoal = rec.opening ? 1 : rec.flapTarget;
@@ -1243,6 +1263,9 @@ function animate() {
     rec.paper.position.z = -rec.paperOffset * 0.4;
     rec.paper.position.y = rec.paperBaseY + rec.paperOffset * 0.25;
   });
+
+  frameCount++;
+  if (frameCount % 4 === 0) updateStackHint();
 
   renderer.render(scene, camera);
 }
