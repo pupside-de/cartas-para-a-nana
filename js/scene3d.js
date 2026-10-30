@@ -25,6 +25,8 @@ let hovered = null;
 let stackHintEl = null;
 let frameCount = 0;
 const tmpVec = new THREE.Vector3();
+let isTouchDevice = false;
+let scenePaused = false;
 
 function init() {
   container = document.getElementById("scene-container");
@@ -37,15 +39,16 @@ function init() {
   camera.position.set(0, 3.4, 6.2);
   camera.lookAt(0, 0.3, 0);
 
-  // tablets/celulares costumam ter devicePixelRatio alto (2-3x), o que fica
-  // muito pesado pra renderizar sombras em tempo real — limitamos mais ali
-  const isTouchDevice = matchMedia("(pointer: coarse)").matches || /Mobi|Android|iPad|iPhone/i.test(navigator.userAgent);
-  const maxPixelRatio = isTouchDevice ? 1.5 : 2;
+  // tablets/celulares costumam ter devicePixelRatio alto (2-3x) e GPU bem
+  // mais fraca — limitamos resolução e desligamos sombras ali pra não travar
+  // a rolagem e o resto da página enquanto a cena roda em segundo plano
+  isTouchDevice = matchMedia("(pointer: coarse)").matches || /Mobi|Android|iPad|iPhone/i.test(navigator.userAgent);
+  const maxPixelRatio = isTouchDevice ? 1.25 : 2;
 
   renderer = new THREE.WebGLRenderer({ antialias: !isTouchDevice, powerPreference: "high-performance" });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !isTouchDevice;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -98,10 +101,12 @@ function initRevisitPanel() {
     populateRevisitList();
     panel.classList.remove("hidden");
     toggle.setAttribute("aria-expanded", "true");
+    scenePaused = true;
   });
   const close = () => {
     panel.classList.add("hidden");
     toggle.setAttribute("aria-expanded", "false");
+    scenePaused = false;
   };
   closeBtn.addEventListener("click", close);
   panel.addEventListener("click", (e) => {
@@ -133,6 +138,7 @@ function populateRevisitList() {
     btn.addEventListener("click", () => {
       document.getElementById("revisit-panel").classList.add("hidden");
       document.getElementById("revisit-toggle").setAttribute("aria-expanded", "false");
+      scenePaused = false;
       const rec = envelopes.find((r) => r.letter.id === letter.id);
       if (rec) openLetter(rec);
     });
@@ -1278,7 +1284,14 @@ function openLetter(rec) {
   // é ignorado e ele volta pra posição de rolagem antiga ao reaparecer
   overlay.classList.remove("hidden");
   sheet.scrollTop = 0;
-  setTimeout(() => overlay.classList.add("visible"), 520);
+  setTimeout(() => {
+    overlay.classList.add("visible");
+    // a partir daqui a carta cobre a cena (o fundo só aparece bem escurecido
+    // atrás dela) — paramos de atualizar/renderizar o 3D enquanto ela lê,
+    // pra rolagem e tudo mais na página ficarem leves, principalmente em
+    // tablet/celular
+    scenePaused = true;
+  }, 520);
 
   fadeMusic(true);
 }
@@ -1286,6 +1299,7 @@ function openLetter(rec) {
 function closeLetter() {
   const overlay = document.getElementById("letter-overlay");
   overlay.classList.remove("visible");
+  scenePaused = false;
 
   fadeMusic(false);
 
@@ -1314,8 +1328,24 @@ function escapeHtml(str) {
 
 // ---------- animation loop ----------
 
+let lastRenderTime = 0;
+
 function animate() {
   requestAnimationFrame(animate);
+
+  // enquanto a carta está aberta cobrindo a cena, não tem nada novo pra ver
+  // — pausa completamente o 3D (sem atualizar nem renderizar) pra liberar a
+  // página inteira, scroll incluso, principalmente em tablet/celular
+  if (scenePaused) return;
+
+  // em telas touch, limita a ~30fps em vez de 60: metade do trabalho de GPU
+  // por segundo, bem mais suave de rolar/interagir no resto da página
+  if (isTouchDevice) {
+    const now = performance.now();
+    if (now - lastRenderTime < 32) return;
+    lastRenderTime = now;
+  }
+
   const dt = Math.min(clock.getDelta(), 0.05);
   const t = clock.elapsedTime;
 
