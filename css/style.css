@@ -153,8 +153,8 @@ body {
 
 .stack-hint {
   position: absolute;
-  top: 30%;
-  right: 28%;
+  top: 36%;
+  right: 20%;
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -187,7 +187,7 @@ body {
 }
 
 @media (max-width: 480px) {
-  .stack-hint { right: 22%; top: 26%; }
+  .stack-hint { right: 16%; top: 30%; }
   .stack-hint-arrow { width: 30px; height: 36px; }
   .stack-hint-text { font-size: 1.1rem; }
 }
