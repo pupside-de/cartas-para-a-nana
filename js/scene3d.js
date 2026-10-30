@@ -1,17 +1,15 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
-const OPENED_KEY = "cartas-para-a-nana:opened";
+// de propósito NÃO usa localStorage/cookies: nada fica salvo no computador.
+// O progresso de leitura vive só na memória desta aba e some ao recarregar
+// a página — toda vez que o site é aberto, todas as cartas começam fechadas.
+let openedIdsMemory = [];
 
 function getOpenedIds() {
-  try {
-    const v = JSON.parse(localStorage.getItem(OPENED_KEY));
-    return Array.isArray(v) ? v : [];
-  } catch {
-    return [];
-  }
+  return openedIdsMemory;
 }
 function saveOpenedIds(arr) {
-  localStorage.setItem(OPENED_KEY, JSON.stringify(arr));
+  openedIdsMemory = arr;
 }
 function jitter(seed) {
   const x = Math.sin(seed * 999.7) * 10000;
