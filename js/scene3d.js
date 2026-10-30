@@ -366,6 +366,38 @@ function buildEasterEggs() {
   buildLapras(1.7, -0.6);
   buildMacawFigurine(0.9, -0.1);
   buildPictureFrame(-3.0, -1.7);
+  buildPaintedBox(-1.15, 1.3, -0.2);
+}
+
+// caixinha de madeira com a tampa pintada à mão pela Nana (casa voadora com
+// balões, estilo "Up") — a arte vem de assets/caixa-casa-baloes.png
+function buildPaintedBox(x, z, rotY = 0) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  group.rotation.y = rotY;
+
+  const boxW = 0.62, boxH = 0.22, boxD = 0.62;
+  const sideMat = new THREE.MeshStandardMaterial({ color: 0x241810, roughness: 0.7 });
+  const bottomMat = new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.8 });
+
+  const lidTex = new THREE.TextureLoader().load("assets/caixa-casa-baloes.png");
+  lidTex.colorSpace = THREE.SRGBColorSpace;
+  const lidMat = new THREE.MeshStandardMaterial({ map: lidTex, roughness: 0.6 });
+
+  // ordem das faces do BoxGeometry: +x, -x, +y (topo), -y (fundo), +z, -z
+  const materials = [sideMat, sideMat, lidMat, bottomMat, sideMat, sideMat];
+  const box = new THREE.Mesh(new THREE.BoxGeometry(boxW, boxH, boxD), materials);
+  box.position.y = boxH / 2;
+  box.castShadow = true;
+  box.receiveShadow = true;
+  group.add(box);
+
+  // luz própria, pra garantir que a arte pintada apareça bem mesmo longe das velas
+  const boxLight = new THREE.PointLight(0xfff0d8, 0.45, 2.2, 2);
+  boxLight.position.set(0, 0.6, 0.15);
+  group.add(boxLight);
+
+  scene.add(group);
 }
 
 function buildCapybara(x, z) {
