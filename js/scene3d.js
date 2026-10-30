@@ -1271,12 +1271,15 @@ function openLetter(rec) {
     ${rec.letter.date ? `<span class="letter-date">${rec.letter.date}</span>` : ""}
     ${escapeHtml(rec.letter.body)}
   `;
-  sheet.scrollTop = 0;
 
   sheet.style.setProperty("--origin-x", `${screen.x}px`);
   sheet.style.setProperty("--origin-y", `${screen.y}px`);
 
+  // precisa tirar o "hidden" (display:none) ANTES de zerar o scroll — em
+  // vários navegadores, escrever scrollTop num elemento ainda display:none
+  // é ignorado e ele volta pra posição de rolagem antiga ao reaparecer
   overlay.classList.remove("hidden");
+  sheet.scrollTop = 0;
   setTimeout(() => overlay.classList.add("visible"), 520);
 
   fadeMusic(true);
