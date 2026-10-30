@@ -84,7 +84,63 @@ function init() {
 
   stackHintEl = document.getElementById("stack-hint");
 
+  initRevisitPanel();
+
   animate();
+}
+
+// ---------- reler carta já lida, por data ----------
+
+function initRevisitPanel() {
+  const toggle = document.getElementById("revisit-toggle");
+  const panel = document.getElementById("revisit-panel");
+  const closeBtn = document.getElementById("revisit-close");
+
+  toggle.addEventListener("click", () => {
+    populateRevisitList();
+    panel.classList.remove("hidden");
+    toggle.setAttribute("aria-expanded", "true");
+  });
+  const close = () => {
+    panel.classList.add("hidden");
+    toggle.setAttribute("aria-expanded", "false");
+  };
+  closeBtn.addEventListener("click", close);
+  panel.addEventListener("click", (e) => {
+    if (e.target.id === "revisit-panel") close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !panel.classList.contains("hidden")) close();
+  });
+
+  refreshRevisitToggle();
+}
+
+function refreshRevisitToggle() {
+  const toggle = document.getElementById("revisit-toggle");
+  if (!toggle) return;
+  toggle.classList.toggle("hidden", getOpenedIds().length === 0);
+}
+
+function populateRevisitList() {
+  const list = document.getElementById("revisit-list");
+  const opened = getOpenedIds();
+  list.innerHTML = "";
+  LETTERS.filter((letter) => opened.includes(letter.id)).forEach((letter) => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "revisit-item-btn";
+    btn.textContent = letter.date || letter.title;
+    btn.addEventListener("click", () => {
+      document.getElementById("revisit-panel").classList.add("hidden");
+      document.getElementById("revisit-toggle").setAttribute("aria-expanded", "false");
+      const rec = envelopes.find((r) => r.letter.id === letter.id);
+      if (rec) openLetter(rec);
+    });
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
 }
 
 // mantém o brilho exatamente em cima do envelope que deve ser clicado,
@@ -851,28 +907,48 @@ function buildPictureFrame(x, z) {
 
 // ---------- Envelope stack ----------
 
-function createEnvelopeMesh(letter) {
-  const group = new THREE.Group();
-  const w = 1.15, h = 0.74, d = 0.03;
+// geometrias e materiais do envelope são idênticos em todas as cartas, então
+// são criados uma única vez e reaproveitados (em vez de 1x por carta) —
+// evita recriar textura/canvas e geometrias repetidas com várias dezenas de
+// envelopes na pilha
+const ENV_W = 1.15, ENV_H = 0.74, ENV_D = 0.03;
+let envelopeAssets = null;
 
-  const envTex = airmailEdgeTexture();
-  const pocketMat = new THREE.MeshStandardMaterial({ color: 0xc7a06c, roughness: 0.75 });
-  const pocket = new THREE.Mesh(new THREE.BoxGeometry(w, d, h), pocketMat);
+function getEnvelopeAssets() {
+  if (envelopeAssets) return envelopeAssets;
+  const w = ENV_W, h = ENV_H, d = ENV_D;
+  envelopeAssets = {
+    pocketGeo: new THREE.BoxGeometry(w, d, h),
+    pocketMat: new THREE.MeshStandardMaterial({ color: 0xc7a06c, roughness: 0.75 }),
+    edgeGeo: new THREE.PlaneGeometry(w, h),
+    edgeMat: new THREE.MeshStandardMaterial({ map: airmailEdgeTexture(), transparent: true, roughness: 0.8 }),
+    paperGeo: new THREE.BoxGeometry(w * 0.9, d * 0.5, h * 0.9),
+    paperMat: new THREE.MeshStandardMaterial({ color: 0xf1e7c9, roughness: 0.95 }),
+    flapGeo: new THREE.BoxGeometry(w * 0.99, 0.01, h * 0.58),
+    flapMat: new THREE.MeshStandardMaterial({ color: 0xb98e58, roughness: 0.72, side: THREE.DoubleSide }),
+    sealGeo: new THREE.CylinderGeometry(0.06, 0.06, 0.012, 16),
+    sealMat: new THREE.MeshStandardMaterial({ color: 0x8c2f2f, roughness: 0.5, metalness: 0.1 }),
+  };
+  return envelopeAssets;
+}
+
+function createEnvelopeMesh() {
+  const group = new THREE.Group();
+  const w = ENV_W, h = ENV_H, d = ENV_D;
+  const a = getEnvelopeAssets();
+
+  const pocket = new THREE.Mesh(a.pocketGeo, a.pocketMat);
   pocket.castShadow = true;
   pocket.receiveShadow = true;
   group.add(pocket);
 
   // airmail striped edge band (thin frame slightly above pocket)
-  const edge = new THREE.Mesh(
-    new THREE.PlaneGeometry(w * 1.0, h * 1.0),
-    new THREE.MeshStandardMaterial({ map: envTex, transparent: true, roughness: 0.8 })
-  );
+  const edge = new THREE.Mesh(a.edgeGeo, a.edgeMat);
   edge.rotation.x = -Math.PI / 2;
   edge.position.y = d / 2 + 0.001;
   group.add(edge);
 
-  const paperMat = new THREE.MeshStandardMaterial({ color: 0xf1e7c9, roughness: 0.95 });
-  const paper = new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, d * 0.5, h * 0.9), paperMat);
+  const paper = new THREE.Mesh(a.paperGeo, a.paperMat);
   paper.position.set(0, d * 0.05, 0);
   paper.castShadow = true;
   paper.receiveShadow = true;
@@ -880,20 +956,14 @@ function createEnvelopeMesh(letter) {
 
   const flapPivot = new THREE.Group();
   flapPivot.position.set(0, d / 2, -h / 2);
-  const flap = new THREE.Mesh(
-    new THREE.BoxGeometry(w * 0.99, 0.01, h * 0.58),
-    new THREE.MeshStandardMaterial({ color: 0xb98e58, roughness: 0.72, side: THREE.DoubleSide })
-  );
+  const flap = new THREE.Mesh(a.flapGeo, a.flapMat);
   flap.position.set(0, 0, h * 0.29);
   flap.castShadow = true;
   flapPivot.add(flap);
   group.add(flapPivot);
 
   // wax seal at flap tip
-  const seal = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.06, 0.06, 0.012, 16),
-    new THREE.MeshStandardMaterial({ color: 0x8c2f2f, roughness: 0.5, metalness: 0.1 })
-  );
+  const seal = new THREE.Mesh(a.sealGeo, a.sealMat);
   seal.rotation.x = Math.PI / 2;
   seal.position.set(0, 0.006, h * 0.56);
   flap.add(seal);
@@ -943,7 +1013,7 @@ function buildEnvelopeStack() {
   const read = opened.map((id) => LETTERS.find((l) => l.id === id)).filter(Boolean);
 
   LETTERS.forEach((letter) => {
-    const mesh = createEnvelopeMesh(letter);
+    const mesh = createEnvelopeMesh();
     const rec = {
       letter,
       ...mesh,
@@ -984,11 +1054,20 @@ function setPile(id, pile, index) {
   rec.paperTarget = pile === "read" ? 0.05 : 0;
 }
 
+let interactiveGroupsCache = [];
+
 function updateInteractivity() {
   envelopes.forEach((r) => (r.interactive = false));
   const unread = envelopes.filter((r) => r.pile === "unread").sort((a, b) => a.index - b.index);
   if (unread.length) unread[0].interactive = true;
   envelopes.filter((r) => r.pile === "read").forEach((r) => (r.interactive = true));
+  refreshInteractiveGroupsCache();
+}
+
+// evita recalcular/alocar esse array em todo movimento de mouse; só muda
+// quando um envelope troca de pilha ou começa/termina de abrir
+function refreshInteractiveGroupsCache() {
+  interactiveGroupsCache = envelopes.filter((r) => r.interactive && !r.opening).map((r) => r.group);
 }
 
 function recomputeStack() {
@@ -1006,8 +1085,7 @@ function onPointerMove(e) {
   pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(pointer, camera);
-  const interactiveGroups = envelopes.filter((r) => r.interactive && !r.opening).map((r) => r.group);
-  const hits = raycaster.intersectObjects(interactiveGroups, true);
+  const hits = raycaster.intersectObjects(interactiveGroupsCache, true);
   const rec = hits.length ? findRec(hits[0].object) : null;
 
   if (hovered !== rec) {
@@ -1032,18 +1110,25 @@ function onClick(e) {
   pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(pointer, camera);
-  const interactiveGroups = envelopes.filter((r) => r.interactive && !r.opening).map((r) => r.group);
-  const hits = raycaster.intersectObjects(interactiveGroups, true);
+  const hits = raycaster.intersectObjects(interactiveGroupsCache, true);
   if (!hits.length) return;
 
   const rec = findRec(hits[0].object);
   if (rec) openLetter(rec);
 }
 
+let resizePending = false;
 function onResize() {
-  camera.aspect = container.clientWidth / container.clientHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  // várias vezes por segundo durante um redimensionamento/rotação de tela —
+  // agrupa num único ajuste por frame em vez de recalcular a cada evento
+  if (resizePending) return;
+  resizePending = true;
+  requestAnimationFrame(() => {
+    resizePending = false;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
 }
 
 // ---------- ambient music (gerada por código, sem arquivo externo) ----------
@@ -1171,6 +1256,7 @@ function openLetter(rec) {
   rec.opening = true;
   rec.flapTarget = 1;
   rec.paperTarget = 0.55;
+  refreshInteractiveGroupsCache();
 
   const worldPos = new THREE.Vector3();
   rec.group.getWorldPosition(worldPos);
@@ -1214,6 +1300,7 @@ function closeLetter() {
       pendingRec.opening = false;
       pendingRec = null;
       recomputeStack();
+      refreshRevisitToggle();
     }
   }, 380);
 }

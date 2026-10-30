@@ -131,6 +131,123 @@ body {
   font-style: italic;
 }
 
+.revisit-toggle {
+  display: inline-block;
+  margin-top: 0.8rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: 'Caveat', cursive;
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  opacity: 0.75;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(122, 92, 62, 0.4);
+  text-underline-offset: 3px;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+.revisit-toggle:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+.revisit-toggle.hidden {
+  display: none;
+}
+
+.revisit-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 14, 8, 0.55);
+  padding: 2rem;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.25s ease;
+}
+.revisit-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.revisit-card {
+  width: 100%;
+  max-width: 380px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-dark);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+  padding: 1.8rem 1.6rem 1.4rem;
+}
+
+.revisit-title {
+  font-family: 'Caveat', cursive;
+  font-size: 1.6rem;
+  color: var(--accent);
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.revisit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(122, 92, 62, 0.45) transparent;
+}
+.revisit-list::-webkit-scrollbar {
+  width: 6px;
+}
+.revisit-list::-webkit-scrollbar-thumb {
+  background-color: rgba(122, 92, 62, 0.4);
+  border-radius: 4px;
+}
+
+.revisit-item-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.3rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  font-family: 'IM Fell English', serif;
+  font-size: 1.05rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.15s ease, padding-left 0.15s ease;
+}
+.revisit-item-btn:last-child {
+  border-bottom: none;
+}
+.revisit-item-btn:hover,
+.revisit-item-btn:focus-visible {
+  color: var(--accent);
+  padding-left: 0.6rem;
+}
+
+.revisit-close-btn {
+  display: block;
+  margin: 1.2rem auto 0;
+  padding: 0.6rem 1.6rem;
+  background: var(--envelope);
+  border: none;
+  border-radius: 2px;
+  font-family: 'Caveat', cursive;
+  font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+.revisit-close-btn:hover {
+  background: var(--envelope-dark);
+}
+
 /* ---------- Desk scene (3D canvas) ---------- */
 
 .desk-scene {
@@ -242,16 +359,20 @@ body {
   background: rgba(20, 14, 8, 0.55);
   padding: 2rem;
   opacity: 0;
-  visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 .letter-overlay.visible {
   opacity: 1;
-  visibility: visible;
+  pointer-events: auto;
 }
 
-.letter-overlay.hidden { display: flex; }
+/* só aplicado depois que a animação de fechar termina (ver closeLetter em
+   scene3d.js): tira a camada do layout/pintura por completo enquanto fechada */
+.letter-overlay.hidden {
+  display: none;
+}
 
 .letter-sheet {
   --origin-x: 50vw;

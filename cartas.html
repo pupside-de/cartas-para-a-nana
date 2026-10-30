@@ -16,7 +16,17 @@
     <a href="index.html" class="back-link">← voltar</a>
     <h1 class="box-title">Caixa de Cartas</h1>
     <p class="box-subtitle">clique no envelope de cima da pilha para abrir</p>
+    <button id="revisit-toggle" class="revisit-toggle hidden" aria-haspopup="true" aria-expanded="false">✦ reler uma carta</button>
   </header>
+
+  <!-- Painel para reabrir uma carta já lida, por data -->
+  <div id="revisit-panel" class="revisit-panel hidden">
+    <div class="revisit-card">
+      <h2 class="revisit-title">Cartas já lidas</h2>
+      <ul id="revisit-list" class="revisit-list"></ul>
+      <button id="revisit-close" class="revisit-close-btn">Fechar</button>
+    </div>
+  </div>
 
   <main class="desk-scene">
     <div id="scene-container"></div>
@@ -36,6 +46,6 @@
   </div>
 
   <script src="js/letters.js"></script>
-  <script type="module" src="js/scene3d.js?v=9"></script>
+  <script type="module" src="js/scene3d.js?v=10"></script>
 </body>
 </html>
