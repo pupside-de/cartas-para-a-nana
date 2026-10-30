@@ -68,6 +68,13 @@ body {
 }
 
 .intro-letter p { margin: 0 0 1.2rem; }
+.letter-header {
+  text-align: right;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.6rem !important;
+}
 .intro-signature {
   font-family: 'Caveat', cursive;
   font-size: 1.6rem;
