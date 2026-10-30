@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cartas para a Nana</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=IM+Fell+English&display=swap" rel="stylesheet">
+</head>
+<body class="box-page">
+
+  <div class="paper-texture"></div>
+
+  <header class="box-header">
+    <a href="index.html" class="back-link">← voltar</a>
+    <h1 class="box-title">Caixa de Cartas</h1>
+    <p class="box-subtitle">clique no envelope de cima da pilha para abrir</p>
+  </header>
+
+  <main class="desk-scene">
+    <div id="scene-container"></div>
+    <div id="scene-loading" class="scene-loading">acendendo a vela...</div>
+    <div id="stack-hint" class="stack-hint" aria-hidden="true">
+      <span class="stack-hint-text">clique aqui</span>
+      <svg class="stack-hint-arrow" viewBox="0 0 60 110" xmlns="http://www.w3.org/2000/svg">
+        <path d="M30 2 C32 40 28 70 25 92" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M10 82 L24 98 L39 80" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </main>
+
+  <!-- Overlay da carta aberta -->
+  <div id="letter-overlay" class="letter-overlay hidden">
+    <div class="letter-sheet">
+      <div class="letter-content" id="letter-content"></div>
+      <button id="close-letter" class="close-letter-btn">Guardar carta</button>
+    </div>
+  </div>
+
+  <script src="js/letters.js"></script>
+  <script type="module" src="js/scene3d.js?v=7"></script>
+</body>
+</html>
