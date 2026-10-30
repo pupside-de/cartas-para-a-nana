@@ -376,7 +376,7 @@ function buildPaintedBox(x, z, rotY = 0) {
   group.position.set(x, 0, z);
   group.rotation.y = rotY;
 
-  const boxW = 0.62, boxH = 0.22, boxD = 0.62;
+  const boxW = 0.78, boxH = 0.16, boxD = 0.78;
   const sideMat = new THREE.MeshStandardMaterial({ color: 0x241810, roughness: 0.7 });
   const bottomMat = new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.8 });
 
