@@ -380,7 +380,7 @@ function buildPaintedBox(x, z, rotY = 0) {
   const sideMat = new THREE.MeshStandardMaterial({ color: 0x241810, roughness: 0.7 });
   const bottomMat = new THREE.MeshStandardMaterial({ color: 0x1a120c, roughness: 0.8 });
 
-  const lidTex = new THREE.TextureLoader().load("assets/caixa-casa-baloes.png");
+  const lidTex = new THREE.TextureLoader().load("assets/caixa-casa-baloes.png?v=2");
   lidTex.colorSpace = THREE.SRGBColorSpace;
   const lidMat = new THREE.MeshStandardMaterial({ map: lidTex, roughness: 0.6 });
 
